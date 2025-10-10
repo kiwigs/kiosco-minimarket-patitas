@@ -1,0 +1,1 @@
+# Minimarket Patitas - Kiosco digital
