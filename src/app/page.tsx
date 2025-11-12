@@ -1,25 +1,37 @@
-export default function Page() {
+"use client";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect } from "react";
+
+export default function PantallaDeReposo() {
+  const router = useRouter();
+
+  const irAlMenu = useCallback(() => {
+    router.push("/menu"); // ajusta si tu ruta del menú es diferente
+  }, [router]);
+
+  // También permite activar con cualquier clic o toque
+  useEffect(() => {
+    const handleClick = () => irAlMenu();
+    window.addEventListener("pointerdown", handleClick, { once: true });
+    return () => window.removeEventListener("pointerdown", handleClick);
+  }, [irAlMenu]);
+
   return (
-    <main
-      style={{
-        width: '100vw',
-        height: '100vh',
-        margin: 0,
-        padding: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#000'
-      }}
-    >
-      <img
+    <main className="relative h-screen w-screen overflow-hidden select-none">
+      <Image
         src="/reposo.png"
         alt="Pantalla de reposo"
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover'
-        }}
+        fill
+        priority
+        className="object-cover"
+      />
+      {/* Botón invisible de fallback */}
+      <button
+        aria-label="Entrar al menú"
+        onClick={irAlMenu}
+        className="absolute inset-0"
       />
     </main>
   );
