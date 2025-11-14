@@ -202,6 +202,8 @@ export default function MenuPage() {
   const [cat, setCat] = useState<Categoria>("Alimentos");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const hydratedRef = useRef(false);
 
   // estado de la barrita flotante sobre el producto
   const [pendingProduct, setPendingProduct] = useState<Producto | null>(null);
@@ -216,15 +218,14 @@ export default function MenuPage() {
   const prevTotalRef = useRef(0);
 
   useEffect(() => {
-  if (!lastChangedId) return;
+    if (!lastChangedId) return;
 
-  const t = setTimeout(() => {
-    setLastChangedId(null); // vuelve al estado "normal" para permitir nueva animación
-  }, 220);
+    const t = setTimeout(() => {
+      setLastChangedId(null); // vuelve al estado "normal"
+    }, 220);
 
-  return () => clearTimeout(t);
-}, [lastChangedId]);
-
+    return () => clearTimeout(t);
+  }, [lastChangedId]);
 
   const productos = useMemo(
     () => CATALOGO.filter((p) => p.categoria === cat),
@@ -247,7 +248,48 @@ export default function MenuPage() {
     }
   }, [total]);
 
-  const clearCart = () => setCart({});
+  const clearCart = () => {
+    setCart({});
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("kiosk-cart", JSON.stringify({}));
+    }
+  };
+
+  const handleNext = () => {
+    if (Object.keys(cart).length === 0) return; // blindaje extra
+
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("kiosk-cart", JSON.stringify(cart));
+    }
+
+    router.push("/resumen");
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = sessionStorage.getItem("kiosk-cart");
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+      setCart(parsed || {});
+    } catch {
+      setCart({});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Primer render: marcar como hidratado y NO escribir
+    if (!hydratedRef.current) {
+      hydratedRef.current = true;
+      return;
+    }
+
+    // Después del primer render sí sincronizamos al storage
+    sessionStorage.setItem("kiosk-cart", JSON.stringify(cart));
+  }, [cart]);
 
   /** ---- helpers de la barrita flotante ---- */
 
@@ -266,62 +308,56 @@ export default function MenuPage() {
 
   // programa el timer de 3 segundos que agrega lo pendiente del ref
   const schedulePendingTimer = () => {
-  if (pendingTimer) {
-    clearTimeout(pendingTimer);
-    setPendingTimer(null);
-  }
-
-  const t = setTimeout(() => {
-    const { product, qty } = pendingRef.current;
-    if (product && qty > 0) {
-      setCart((c) => ({
-        ...c,
-        [product.id]: (c[product.id] ?? 0) + qty,
-      }));
-      // 👇 marcar para animar en el carrito
-      setLastChangedId(product.id);
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      setPendingTimer(null);
     }
 
-    // limpiar ref y UI
-    pendingRef.current = { product: null, qty: 1 };
-    resetPendingUi();
-    setPendingTimer(null);
-  }, 3000);
+    const t = setTimeout(() => {
+      const { product, qty } = pendingRef.current;
+      if (product && qty > 0) {
+        setCart((c) => ({
+          ...c,
+          [product.id]: (c[product.id] ?? 0) + qty,
+        }));
+        setLastChangedId(product.id);
+      }
 
-  setPendingTimer(t);
-};
+      pendingRef.current = { product: null, qty: 1 };
+      resetPendingUi();
+      setPendingTimer(null);
+    }, 3000);
 
+    setPendingTimer(t);
+  };
 
   // click en tarjeta de producto
   const startPending = (p: Producto, rect: DOMRect) => {
-  const { product: oldProd, qty: oldQty } = pendingRef.current;
+    const { product: oldProd, qty: oldQty } = pendingRef.current;
 
-  // si había OTRO producto pendiente, lo agregamos UNA sola vez al carrito
-  if (oldProd && oldProd.id !== p.id && oldQty > 0) {
-    setCart((c) => ({
-      ...c,
-      [oldProd.id]: (c[oldProd.id] ?? 0) + oldQty,
-    }));
-    // 👇 aquí marcamos ese producto para que ANIME en el carrito
-    setLastChangedId(oldProd.id);
-  }
+    if (oldProd && oldProd.id !== p.id && oldQty > 0) {
+      setCart((c) => ({
+        ...c,
+        [oldProd.id]: (c[oldProd.id] ?? 0) + oldQty,
+      }));
+      setLastChangedId(oldProd.id);
+    }
 
-  let newQty = 1;
-  if (oldProd && oldProd.id === p.id) {
-    newQty = oldQty + 1;
-  }
+    let newQty = 1;
+    if (oldProd && oldProd.id === p.id) {
+      newQty = oldQty + 1;
+    }
 
-  pendingRef.current = { product: p, qty: newQty };
-  setPendingProduct(p);
-  setPendingQty(newQty);
-  setPendingPos({
-    x: rect.right,
-    y: rect.top,
-  });
+    pendingRef.current = { product: p, qty: newQty };
+    setPendingProduct(p);
+    setPendingQty(newQty);
+    setPendingPos({
+      x: rect.right,
+      y: rect.top,
+    });
 
-  schedulePendingTimer();
-};
-
+    schedulePendingTimer();
+  };
 
   const incPending = () => {
     if (!pendingRef.current.product) return;
@@ -342,7 +378,7 @@ export default function MenuPage() {
     if (!pendingRef.current.product) return;
 
     setPendingQty((q) => {
-      const newQty = Math.max(0, q - 1); // puede llegar a 0 para "no añadir"
+      const newQty = Math.max(0, q - 1);
       pendingRef.current = {
         ...pendingRef.current,
         qty: newQty,
@@ -435,16 +471,21 @@ export default function MenuPage() {
 
               <div className="mt-6 flex justify-center gap-6">
                 <button
-                  onClick={clearCart}
+                  onClick={() => setShowCancelConfirm(true)}
                   className="w-full max-w-xs rounded-2xl bg-[#b71c1c] px-8 py-4 text-white font-semibold shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
                 >
                   Cancelar orden
                 </button>
+                {/* Siguiente – deshabilitado con carrito vacío */}
                 <button
-                  onClick={() => {
-                    console.log("Siguiente →", { cart });
-                  }}
-                  className="w-full max-w-xs rounded-2xl bg-[#f2c200] px-8 py-4 font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
+                  onClick={handleNext}
+                  disabled={Object.keys(cart).length === 0}
+                  className={[
+                    "w-full max-w-xs rounded-2xl px-8 py-4 font-semibold shadow-md transition",
+                    Object.keys(cart).length === 0
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-[#f2c200] text-white hover:brightness-110 active:translate-y-[1px] active:shadow-inner",
+                  ].join(" ")}
                 >
                   Siguiente
                 </button>
@@ -461,18 +502,17 @@ export default function MenuPage() {
 
                     return (
                       <li
-  key={id}
-  className={[
-    "flex items-center gap-4 py-2 px-3 rounded-xl transition-all duration-200",
-    removingId === id
-      ? "opacity-0 -translate-x-4"
-      : "opacity-100 translate-x-0",
-    lastChangedId === id
-      ? "scale-105 bg-yellow-50 shadow-md"
-      : "scale-100 bg-white",
-  ].join(" ")}
->
-
+                        key={id}
+                        className={[
+                          "flex items-center gap-4 py-2 px-3 rounded-xl transition-all duration-200",
+                          removingId === id
+                            ? "opacity-0 -translate-x-4"
+                            : "opacity-100 translate-x-0",
+                          lastChangedId === id
+                            ? "scale-105 bg-yellow-50 shadow-md"
+                            : "scale-100 bg-white",
+                        ].join(" ")}
+                      >
                         {/* imagen */}
                         <div className="h-14 w-14 rounded-lg border overflow-hidden">
                           <img
@@ -548,27 +588,26 @@ export default function MenuPage() {
 
                         {/* eliminar */}
                         <button
-  onClick={() => {
-    setRemovingId(id);
-    setTimeout(() => {
-      setCart((c) => {
-        const copy = { ...c };
-        delete copy[id];
-        return copy;
-      });
-      setRemovingId(null);
-    }, 180);
-  }}
-  className="
-    text-[#b71c1c] hover:text-[#7f0f0f]
-    text-2xl font-extrabold
-    px-3
-    transition
-  "
->
-  ×
-</button>
-
+                          onClick={() => {
+                            setRemovingId(id);
+                            setTimeout(() => {
+                              setCart((c) => {
+                                const copy = { ...c };
+                                delete copy[id];
+                                return copy;
+                              });
+                              setRemovingId(null);
+                            }, 180);
+                          }}
+                          className="
+                            text-[#b71c1c] hover:text-[#7f0f0f]
+                            text-2xl font-extrabold
+                            px-3
+                            transition
+                          "
+                        >
+                          ×
+                        </button>
                       </li>
                     );
                   })}
@@ -577,47 +616,51 @@ export default function MenuPage() {
 
               {/* Total con animación */}
               <div className="mt-4 border-t pt-4 text-right text-lg font-bold text-gray-900">
-  <span>Total:&nbsp;</span>
-  <span
-    className={[
-      "inline-block transition-transform duration-200",
-      totalBump ? "scale-110" : "scale-100",
-    ].join(" ")}
-  >
-    S/ {total.toFixed(2)}
-  </span>
-</div>
+                <span>Total:&nbsp;</span>
+                <span
+                  className={[
+                    "inline-block transition-transform duration-200",
+                    totalBump ? "scale-110" : "scale-100",
+                  ].join(" ")}
+                >
+                  S/ {total.toFixed(2)}
+                </span>
+              </div>
 
               {/* Vaciar carrito */}
               <div className="mt-3 flex justify-end">
-  <button
-    onClick={clearCart}
-    className="
-      rounded-2xl bg-[#b71c1c]
-      px-6 py-2 text-[14px] font-semibold text-white
-      shadow-md hover:brightness-110
-      active:translate-y-[1px] active:shadow-inner
-      transition
-    "
-  >
-    Vaciar carrito
-  </button>
-</div>
-
+                <button
+                  onClick={clearCart}
+                  className="
+                    rounded-2xl bg-[#b71c1c]
+                    px-6 py-2 text-[14px] font-semibold text-white
+                    shadow-md hover:brightness-110
+                    active:translate-y-[1px] active:shadow-inner
+                    transition
+                  "
+                >
+                  Vaciar carrito
+                </button>
+              </div>
 
               {/* Botones finales */}
               <div className="mt-6 flex w-full items-center justify-center gap-6">
                 <button
-                  onClick={clearCart}
+                  onClick={() => setShowCancelConfirm(true)}
                   className="w-full max-w-xs rounded-2xl bg-[#b71c1c] px-8 py-4 text-[16px] font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
                 >
                   Cancelar orden
                 </button>
+                {/* Siguiente – mismo patrón de estilos, pero aquí siempre habilitado porque hay productos */}
                 <button
-                  onClick={() => {
-                    console.log("Siguiente →", { cart });
-                  }}
-                  className="w-full max-w-xs rounded-2xl bg-[#f2c200] px-8 py-4 text-[16px] font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
+                  onClick={handleNext}
+                  disabled={Object.keys(cart).length === 0}
+                  className={[
+                    "w-full max-w-xs rounded-2xl px-8 py-4 text-[16px] font-semibold shadow-md transition",
+                    Object.keys(cart).length === 0
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-[#f2c200] text-white hover:brightness-110 active:translate-y-[1px] active:shadow-inner",
+                  ].join(" ")}
                 >
                   Siguiente
                 </button>
@@ -644,8 +687,7 @@ export default function MenuPage() {
               active:translate-y-[1px] active:shadow-inner transition
             "
           >
-            –
-          </button>
+            –</button>
 
           <div className="min-w-[24px] text-center font-bold text-lg text-black">
             {pendingQty}
@@ -674,13 +716,44 @@ export default function MenuPage() {
                   setShowBackConfirm(false);
                   router.back();
                 }}
-                className="min-w-[150px] rounded-2xl bg-[#f2c200] px-6 py-3 text-[16px] font-semibold text.white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
+                className="min-w-[150px] rounded-2xl bg-[#f2c200] px-6 py-3 text-[16px] font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
               >
                 Sí
               </button>
 
               <button
                 onClick={() => setShowBackConfirm(false)}
+                className="min-w-[150px] rounded-2xl bg-[#b71c1c] px-6 py-3 text-[16px] font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pop-up de confirmación para "Cancelar orden" */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <p className="mb-6 text-center text-lg font-semibold text-gray-800">
+              ¿Está seguro de querer cancelar la orden?
+            </p>
+
+            <div className="flex items-center justify-center gap-6">
+              <button
+                onClick={() => {
+                  clearCart();
+                  setShowCancelConfirm(false);
+                  router.push("/");
+                }}
+                className="min-w-[150px] rounded-2xl bg-[#f2c200] px-6 py-3 text-[16px] font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
+              >
+                Sí
+              </button>
+
+              <button
+                onClick={() => setShowCancelConfirm(false)}
                 className="min-w-[150px] rounded-2xl bg-[#b71c1c] px-6 py-3 text-[16px] font-semibold text-white shadow-md hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
               >
                 No
