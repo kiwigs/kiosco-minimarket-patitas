@@ -92,6 +92,10 @@ export default function TicketPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
+  // 👇 nuevo: saber si el ticket ya pasó por el flujo de impresión
+  const [printed, setPrinted] = useState(false);
+
+  // Cargar orden desde sessionStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = sessionStorage.getItem("kiosk-last-order");
@@ -102,7 +106,34 @@ export default function TicketPage() {
     } catch {
       setOrder(null);
     }
+
+    // 👇 importante: borrar para que NO se pueda reusar la misma orden al recargar
+    sessionStorage.removeItem("kiosk-last-order");
+    sessionStorage.removeItem("kiosk-cart");
   }, []);
+
+  // Escuchar el evento afterprint: se dispara cuando se cierra el diálogo de impresión
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleAfterPrint = () => {
+      setPrinted(true);
+    };
+
+    window.addEventListener("afterprint", handleAfterPrint);
+    return () => window.removeEventListener("afterprint", handleAfterPrint);
+  }, []);
+
+  const handlePrint = () => {
+    if (printed) return; // por si acaso
+    window.print();
+    // `printed` se pone en true en handleAfterPrint
+  };
+
+  const handleRequestExit = () => {
+    if (!printed) return; // no permitir ni siquiera abrir el modal si no ha impreso
+    setShowExitConfirm(true);
+  };
 
   if (!order) {
     return (
@@ -151,7 +182,7 @@ export default function TicketPage() {
 
       {/* contenido */}
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6">
-                {/* título centrado */}
+        {/* título centrado */}
         <div className="mb-6 text-center">
           <h2 className="text-3xl font-extrabold tracking-wide text-[#f2c200]">
             ¡Orden confirmada!
@@ -215,36 +246,41 @@ export default function TicketPage() {
           </p>
         </div>
 
-         {/* botones inferiores → se ocultan al imprimir */}
+        {/* botones inferiores → se ocultan al imprimir */}
         <div className="mt-8 flex items-center justify-center gap-6">
-  <button
-    onClick={() => window.print()}
-    className="
-      w-full max-w-xs rounded-2xl bg-[#f2c200]
-      px-6 py-3 text-[16px] font-semibold text-white
-      whitespace-nowrap
-      shadow-md hover:brightness-110
-      active:translate-y-[1px] active:shadow-inner
-      transition
-    "
-  >
-    Imprimir ticket
-  </button>
+          <button
+            onClick={handlePrint}
+            disabled={printed}
+            className={[
+              "w-full max-w-xs rounded-2xl px-6 py-3 text-[16px] font-semibold whitespace-nowrap shadow-md transition",
+              printed
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#f2c200] text-white hover:brightness-110 active:translate-y-[1px] active:shadow-inner",
+            ].join(" ")}
+          >
+            {printed ? "Ticket impreso" : "Imprimir ticket"}
+          </button>
 
-  <button
-    onClick={() => setShowExitConfirm(true)}
-    className="
-      w-full max-w-xs rounded-2xl bg-[#b71c1c]
-      px-6 py-3 text-[16px] font-semibold text-white
-      shadow-md hover:brightness-110
-      active:translate-y-[1px] active:shadow-inner
-      transition
-    "
-  >
-    Salir
-  </button>
-</div>
+          <button
+            onClick={handleRequestExit}
+            disabled={!printed}
+            className={[
+              "w-full max-w-xs rounded-2xl px-6 py-3 text-[16px] font-semibold shadow-md transition",
+              !printed
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#b71c1c] text-white hover:brightness-110 active:translate-y-[1px] active:shadow-inner",
+            ].join(" ")}
+          >
+            Salir
+          </button>
         </div>
+
+        {!printed && (
+          <p className="mt-4 text-xs text-gray-500">
+            Para continuar, primero imprima su ticket.
+          </p>
+        )}
+      </div>
 
       {/* Pop-up de confirmación para "Salir" */}
       {showExitConfirm && (
