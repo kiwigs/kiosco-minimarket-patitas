@@ -1,0 +1,56 @@
+[
+  {
+    "id": "dogchow-15",
+    "nombre": "Dog Chow",
+    "sub": "Adultos Grandes 15kg",
+    "categoria": "Alimentos",
+    "precio": 137.9,
+    "activo": true,
+    "imageUrl": "/uploads/1764039779866-95ada78a141aa.png"
+  },
+  {
+    "id": "ricocan-cordero-15",
+    "nombre": "Ricocan",
+    "sub": "Adultos Medianos Cordero 15kg",
+    "categoria": "Alimentos",
+    "precio": 96.9,
+    "activo": true,
+    "imageUrl": "/uploads/1764039807234-12d2bab69a7cf.png"
+  },
+  {
+    "id": "thor-25",
+    "nombre": "Thor",
+    "sub": "Adultos Carne + Cereales 25kg",
+    "categoria": "Alimentos",
+    "precio": 121,
+    "activo": true,
+    "imageUrl": "/uploads/1764039813927-bf52ed8555ae18.png"
+  },
+  {
+    "id": "catchow-8",
+    "nombre": "Cat Chow",
+    "sub": "Gatos Adultos Esterilizados 8kg",
+    "categoria": "Alimentos",
+    "precio": 104.9,
+    "activo": true,
+    "imageUrl": "/uploads/1764039824468-02418a58e21f1.png"
+  },
+  {
+    "id": "ricocat-9",
+    "nombre": "Ricocat",
+    "sub": "Gatos Esterilizados Pescado 9kg",
+    "categoria": "Alimentos",
+    "precio": 88.9,
+    "activo": true,
+    "imageUrl": "/uploads/1764039830971-84a42f9983221.png"
+  },
+  {
+    "id": "origens-lata",
+    "nombre": "Origens",
+    "sub": "Trozos de Cordero Adulto 170g 4u",
+    "categoria": "Alimentos",
+    "precio": 32.7,
+    "activo": true,
+    "imageUrl": "/uploads/1764039841077-e0905b5554386.png"
+  }
+]
