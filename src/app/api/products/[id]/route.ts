@@ -37,15 +37,26 @@ async function writeDb(data: Producto[]) {
   await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2), "utf8");
 }
 
-// PATCH /api/products/[id]
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id } = params;
-    const body = await req.json();
+// Helper para obtener el id desde la URL del request
+function getIdFromRequest(req: Request): string | null {
+  const url = new URL(req.url);
+  const segments = url.pathname.split("/").filter(Boolean);
+  const id = segments[segments.length - 1];
+  return id || null;
+}
 
+// PATCH /api/products/[id]
+export async function PATCH(req: Request) {
+  try {
+    const id = getIdFromRequest(req);
+    if (!id) {
+      return NextResponse.json(
+        { error: "ID no proporcionado" },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
     const productos = await readDb();
     const idx = productos.findIndex((p) => p.id === id);
 
@@ -99,11 +110,7 @@ export async function PATCH(
 // DELETE /api/products/[id]
 export async function DELETE(req: Request) {
   try {
-    // Tomamos el id desde la URL para evitar el segundo argumento tipado raro
-    const url = new URL(req.url);
-    const segments = url.pathname.split("/").filter(Boolean);
-    const id = segments[segments.length - 1] ?? "";
-
+    const id = getIdFromRequest(req);
     if (!id) {
       return NextResponse.json(
         { error: "ID no proporcionado" },
