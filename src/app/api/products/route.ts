@@ -21,14 +21,16 @@ async function readDb(): Promise<Producto[]> {
   try {
     const raw = await fs.readFile(DB_PATH, "utf8");
     return JSON.parse(raw) as Producto[];
-  } catch (err: any) {
-    if (err.code === "ENOENT") {
+  } catch (err: unknown) {
+    const error = err as NodeJS.ErrnoException;
+
+    if (error.code === "ENOENT") {
       // si no existe, la creamos vacía
       await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
       await fs.writeFile(DB_PATH, "[]", "utf8");
       return [];
     }
-    throw err;
+    throw error;
   }
 }
 

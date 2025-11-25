@@ -5,102 +5,25 @@ import { useRouter } from "next/navigation";
 
 /** ---- Tipos ---- */
 type Categoria = "Grooming" | "Alimentos" | "Premios" | "Recetados";
+
 type Producto = {
   id: string;
   nombre: string;
   sub: string;
   precio: number; // S/
-  img?: string;   // ruta en /public
+  img?: string; // ruta en /public o URL
   categoria: Categoria;
 };
 
-/** ---- Catálogo ---- */
-const CATALOGO: Producto[] = [
-  // Alimentos
-  {
-    id: "dogchow-15",
-    nombre: "Dog Chow",
-    sub: "Adultos Grandes 15kg",
-    precio: 137.9,
-    img: "/productos/dogchow-adultos-grandes-15kg.png",
-    categoria: "Alimentos",
-  },
-  {
-    id: "ricocan-cordero-15",
-    nombre: "Ricocan",
-    sub: "Adultos Medianos Cordero 15kg",
-    precio: 96.9,
-    img: "/productos/ricocan-adultos-medianos-cordero-15kg.png",
-    categoria: "Alimentos",
-  },
-  {
-    id: "thor-25",
-    nombre: "Thor",
-    sub: "Adultos Carne + Cereales 25kg",
-    precio: 121.0,
-    img: "/productos/thor-adultos-carne-cereales-25kg.png",
-    categoria: "Alimentos",
-  },
-  {
-    id: "catchow-8",
-    nombre: "Cat Chow",
-    sub: "Gatos Adultos Esterilizados 8kg",
-    precio: 104.9,
-    img: "/productos/catchow-gatos-adultos-esterilizados-8kg.png",
-    categoria: "Alimentos",
-  },
-  {
-    id: "ricocat-9",
-    nombre: "Ricocat",
-    sub: "Gatos Esterilizados Pescado 9kg",
-    precio: 88.9,
-    img: "/productos/ricocat-gatos-esterilizados-pescado-9kg.png",
-    categoria: "Alimentos",
-  },
-  {
-    id: "origens-lata",
-    nombre: "Origens",
-    sub: "Trozos de Cordero Adulto 170g 4u",
-    precio: 32.7,
-    img: "/productos/origens-trozos-cordero-adulto-170g.png",
-    categoria: "Alimentos",
-  },
-  // Premios
-  {
-    id: "premio-galleta",
-    nombre: "Galletas Caninas",
-    sub: "Sabor Pollo 500g",
-    precio: 19.9,
-    img: "/productos/premios-galleta.png",
-    categoria: "Premios",
-  },
-  {
-    id: "premio-snack",
-    nombre: "Snack Masticable",
-    sub: "Cuero prensado 3u",
-    precio: 14.5,
-    img: "/productos/premios-snack.png",
-    categoria: "Premios",
-  },
-  // Grooming
-  {
-    id: "bano-perro",
-    nombre: "Baño Canino",
-    sub: "Shampoo hipoalergénico",
-    precio: 35,
-    img: "/productos/grooming-bano.png",
-    categoria: "Grooming",
-  },
-  // Recetados
-  {
-    id: "anti-rece",
-    nombre: "Antiparasitario",
-    sub: "Uso con receta",
-    precio: 49.9,
-    img: "/productos/recetado-antiparasitario.png",
-    categoria: "Recetados",
-  },
-];
+type ProductoDB = {
+  id: string;
+  nombre: string;
+  sub: string;
+  categoria: Categoria;
+  precio: number;
+  activo: boolean;
+  imageUrl?: string;
+};
 
 /** ---- Botón de categoría ---- */
 function CategoriaBtn({
@@ -205,17 +128,59 @@ export default function MenuPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const hydratedRef = useRef(false);
 
+  // catálogo desde la BD
+  const [catalogo, setCatalogo] = useState<Producto[]>([]);
+  const [loadingCatalogo, setLoadingCatalogo] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
   // estado de la barrita flotante sobre el producto
   const [pendingProduct, setPendingProduct] = useState<Producto | null>(null);
   const [pendingQty, setPendingQty] = useState(1);
-  const [pendingPos, setPendingPos] = useState<{ x: number; y: number } | null>(null);
-  const [pendingTimer, setPendingTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [pendingPos, setPendingPos] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [pendingTimer, setPendingTimer] =
+    useState<ReturnType<typeof setTimeout> | null>(null);
 
   // animaciones carrito
   const [lastChangedId, setLastChangedId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [totalBump, setTotalBump] = useState(false);
   const prevTotalRef = useRef(0);
+
+  /** ---- Carga catálogo desde /api/products ---- */
+  useEffect(() => {
+    const fetchCatalogo = async () => {
+      try {
+        const res = await fetch("/api/products");
+        if (!res.ok) {
+          setCatalogError("No se pudo cargar el catálogo.");
+          return;
+        }
+
+        const data: ProductoDB[] = await res.json();
+        const activos = data.filter((p) => p.activo);
+
+        const mapeados: Producto[] = activos.map((p) => ({
+          id: p.id,
+          nombre: p.nombre,
+          sub: p.sub,
+          precio: p.precio,
+          categoria: p.categoria,
+          img: p.imageUrl ?? undefined,
+        }));
+
+        setCatalogo(mapeados);
+      } catch (err) {
+        console.error("Error trayendo catálogo:", err);
+        setCatalogError("Error de conexión con el catálogo.");
+      } finally {
+        setLoadingCatalogo(false);
+      }
+    };
+
+    fetchCatalogo();
+  }, []);
 
   useEffect(() => {
     if (!lastChangedId) return;
@@ -228,16 +193,16 @@ export default function MenuPage() {
   }, [lastChangedId]);
 
   const productos = useMemo(
-    () => CATALOGO.filter((p) => p.categoria === cat),
-    [cat]
+    () => catalogo.filter((p) => p.categoria === cat),
+    [catalogo, cat]
   );
 
   const total = useMemo(() => {
     return Object.entries(cart).reduce((acc, [id, qty]) => {
-      const prod = CATALOGO.find((p) => p.id === id);
+      const prod = catalogo.find((p) => p.id === id);
       return acc + (prod ? prod.precio * qty : 0);
     }, 0);
-  }, [cart]);
+  }, [cart, catalogo]);
 
   useEffect(() => {
     if (total !== prevTotalRef.current) {
@@ -404,7 +369,12 @@ export default function MenuPage() {
 
           <div className="flex flex-1 flex-col items-center justify-center gap-4 translate-y-[-10%]">
             {["Grooming", "Alimentos", "Premios", "Recetados"].map((label) => {
-              const order: Categoria[] = ["Grooming", "Alimentos", "Premios", "Recetados"];
+              const order: Categoria[] = [
+                "Grooming",
+                "Alimentos",
+                "Premios",
+                "Recetados",
+              ];
               const activeIndex = order.indexOf(cat);
               const i = order.indexOf(label as Categoria);
               const d = Math.abs(i - activeIndex);
@@ -455,6 +425,21 @@ export default function MenuPage() {
               <ProductCard key={p.id} p={p} onSelect={startPending} />
             ))}
           </div>
+
+          {/* Estados de carga / error */}
+          {loadingCatalogo && (
+            <p className="mt-4 text-gray-500 text-sm">Cargando catálogo...</p>
+          )}
+
+          {catalogError && (
+            <p className="mt-4 text-red-600 font-semibold">{catalogError}</p>
+          )}
+
+          {!loadingCatalogo && !catalogError && productos.length === 0 && (
+            <p className="mt-4 text-gray-500 text-sm">
+              No hay productos disponibles en esta categoría.
+            </p>
+          )}
         </div>
       </div>
 
@@ -497,7 +482,7 @@ export default function MenuPage() {
               <div className="max-h-64 overflow-y-auto overflow-x-hidden pr-2">
                 <ul className="flex flex-col gap-4">
                   {Object.entries(cart).map(([id, qty]) => {
-                    const p = CATALOGO.find((x) => x.id === id);
+                    const p = catalogo.find((x) => x.id === id);
                     if (!p) return null;
 
                     return (
@@ -687,7 +672,8 @@ export default function MenuPage() {
               active:translate-y-[1px] active:shadow-inner transition
             "
           >
-            –</button>
+            –
+          </button>
 
           <div className="min-w-[24px] text-center font-bold text-lg text-black">
             {pendingQty}
