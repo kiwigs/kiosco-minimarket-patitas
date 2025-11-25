@@ -97,12 +97,20 @@ export async function PATCH(
 }
 
 // DELETE /api/products/[id]
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request) {
   try {
-    const { id } = params;
+    // Tomamos el id desde la URL para evitar el segundo argumento tipado raro
+    const url = new URL(req.url);
+    const segments = url.pathname.split("/").filter(Boolean);
+    const id = segments[segments.length - 1] ?? "";
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "ID no proporcionado" },
+        { status: 400 }
+      );
+    }
+
     const productos = await readDb();
     const filtered = productos.filter((p) => p.id !== id);
 
