@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
-// 👇 fuerza que este handler corra en runtime nodejs (no edge)
-export const runtime = "nodejs";
+// 👇 Esto obliga a Vercel a usar Node.js runtime
+export const config = {
+  runtime: "nodejs",
+};
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -24,12 +26,11 @@ export async function POST(req: Request) {
 
   const res = NextResponse.json({ ok: true });
 
-  // Cookie de sesión del panel
   res.cookies.set("panel_auth", "1", {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 8, // 8 horas
+    maxAge: 60 * 60 * 8,
     path: "/",
   });
 

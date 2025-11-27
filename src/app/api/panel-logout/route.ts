@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+// 👇 Igual aquí
+export const config = {
+  runtime: "nodejs",
+};
 
 export async function POST() {
   const res = NextResponse.json({ ok: true });
