@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true });
+  const cookieStore = await cookies(); // ✅ FIX
 
-  // Borrar la cookie del panel
-  res.cookies.delete("panel_auth");
+  cookieStore.delete("panel_auth");
 
-  return res;
+  return Response.json({ ok: true });
 }
