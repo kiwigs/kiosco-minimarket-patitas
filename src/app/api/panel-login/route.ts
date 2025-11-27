@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 
-// 👇 Esto obliga a Vercel a usar Node.js runtime
-export const config = {
-  runtime: "nodejs",
-};
+// 👇 ESTE es el config correcto en App Router
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const pin = body?.pin;
   const expectedPin = process.env.PANEL_PIN;
+
+  console.log("DEBUG PANEL_PIN:", expectedPin); // <- para ver en logs de Vercel
 
   if (!expectedPin) {
     return NextResponse.json(
