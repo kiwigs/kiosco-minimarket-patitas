@@ -205,7 +205,7 @@ export default function PanelOrdenesPage() {
 
     try {
       const res = await fetch(`/api/orders/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
