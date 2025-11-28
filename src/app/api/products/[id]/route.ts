@@ -1,4 +1,5 @@
-// src/app/api/products/[id]/route.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import type { CategoriaBase, Producto } from "../route";
@@ -35,14 +36,7 @@ export async function PATCH(req: Request, context: any) {
 
   try {
     const body = await req.json();
-    const {
-      nombre,
-      sub,
-      categoria,
-      precio,
-      activo,
-      imageUrl,
-    } = body;
+    const { nombre, sub, categoria, precio, activo, imageUrl } = body;
 
     const fields: string[] = [];
     const values: (string | number | boolean | null)[] = [];
@@ -93,7 +87,6 @@ export async function PATCH(req: Request, context: any) {
       `;
 
       const result = await client.query<ProductRow>(query, values);
-
       if (result.rowCount === 0) {
         return NextResponse.json(
           { error: "Producto no encontrado" },
