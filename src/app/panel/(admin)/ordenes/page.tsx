@@ -356,7 +356,7 @@ export default function PanelOrdenesPage() {
                   Categoría
                 </th>
                 {/* 3) DETALLE */}
-                <th className="px-4 py-3 align-top font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 align-top text-left font-semibold tracking-wide text-gray-600">
                   Detalle
                 </th>
                 {/* 4) ESTADO */}
@@ -434,11 +434,15 @@ export default function PanelOrdenesPage() {
                     <td className="px-4 py-3 text-sm text-gray-700 align-top">
                       <ul className="list-disc pl-6 space-y-1">
                         {detailItems.map((d, idx) => (
-                          <li key={idx} className="flex items-center gap-3">
-                            <span className="leading-tight">{d.label}</span>
-                            <span className="inline-flex ml-3 items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
-                              x{d.qty}
-                            </span>
+                          <li key={idx}>
+                            <div className="flex items-center gap-3">
+                              <span className="flex-1 leading-tight">
+                                {d.label}
+                              </span>
+                              <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
+                                x{d.qty}
+                              </span>
+                            </div>
                           </li>
                         ))}
                       </ul>
