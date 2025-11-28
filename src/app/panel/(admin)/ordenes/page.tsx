@@ -274,19 +274,6 @@ export default function PanelOrdenesPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/panel-logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      router.replace("/panel/login");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100">
       {/* barra superior */}
