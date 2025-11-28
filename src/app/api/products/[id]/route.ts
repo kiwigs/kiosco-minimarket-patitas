@@ -27,12 +27,11 @@ function rowToProducto(row: ProductRow): Producto {
   };
 }
 
-// 🔥 PATCH → actualizar producto
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = params.id;
+/* ------------------------------------------
+   PATCH  /api/products/[id]
+--------------------------------------------*/
+export async function PATCH(req: Request, context: any) {
+  const id = context.params.id;
 
   try {
     const body = await req.json();
@@ -43,14 +42,7 @@ export async function PATCH(
       precio,
       activo,
       imageUrl,
-    } = body as Partial<{
-      nombre: string;
-      sub: string;
-      categoria: CategoriaBase;
-      precio: number;
-      activo: boolean;
-      imageUrl: string;
-    }>;
+    } = body;
 
     const fields: string[] = [];
     const values: (string | number | boolean | null)[] = [];
@@ -122,12 +114,11 @@ export async function PATCH(
   }
 }
 
-// 🔥 DELETE → eliminar producto
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = params.id;
+/* ------------------------------------------
+   DELETE  /api/products/[id]
+--------------------------------------------*/
+export async function DELETE(_req: Request, context: any) {
+  const id = context.params.id;
 
   try {
     const client = await pool.connect();
