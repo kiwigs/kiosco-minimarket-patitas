@@ -1,72 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
+import { generateText } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+
+// Provider de OpenRouter para el AI SDK
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const messages = body?.messages;
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!Array.isArray(messages)) {
       return NextResponse.json(
-        { error: "Formato inválido" },
+        { error: "Formato inválido de mensajes desde el cliente." },
         { status: 400 }
       );
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      console.error("NO HAY API KEY");
+    // Si no hay API key -> devolvemos error CLARO al frontend
+    if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: "OPENROUTER_API_KEY no configurada" },
+        {
+          error:
+            "Falta configurar OPENROUTER_API_KEY (.env.local en dev y Environment Variables en Vercel).",
+        },
         { status: 500 }
       );
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:3000",
-        "X-Title": "Kiosco-Minimarket-Patitas",
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3-8b-instruct",
-        messages: [
-          {
-            role: "system",
-            content: `
-Eres un asistente veterinario digital para Minimarket Patitas.
+    // Convertimos todo el historial en texto para un prompt sencillo
+    const conversationText = messages
+      .map((m: { role: string; content: string }) =>
+        `${m.role === "user" ? "Cliente" : "Asistente"}: ${m.content}`
+      )
+      .join("\n");
 
-Responde:
-- Claro, amable y en español.
-- Solo orientación básica (alimentación, higiene, primeros signos).
-- NO das dosis ni tratamientos.
-- Si hay síntomas graves: "Esto requiere atención veterinaria inmediata."
-- Si es un caso complejo pero no urgente: "Puedes agendar una cita en: https://calendly.com/tu-vet".
-            `,
-          },
-          ...messages
-        ],
-        temperature: 0.4,
-      }),
+    const { text } = await generateText({
+      // cualquier modelo soportado por OpenRouter, este es barato y decente
+      model: openrouter("meta-llama/llama-3-8b-instruct"),
+      prompt: `
+Eres un asistente veterinario digital de Minimarket Patitas.
+
+Reglas:
+- Responde SIEMPRE en español.
+- Solo das orientación general (alimentación, higiene, signos de alarma).
+- NO indiques dosis ni tratamientos exactos.
+- Si hay síntomas graves (sangrado, dificultad respiratoria, convulsiones, dolor intenso, apatía extrema, vómitos o diarrea con sangre, etc.):
+  di claramente que requiere atención veterinaria PRESENCIAL inmediata.
+- Si el caso es complejo pero no urgente, sugiere agendar cita online y añade:
+  "Puedes agendar una cita con nuestra especialista aquí: https://calendly.com/tu-vet".
+
+Historial de conversación:
+${conversationText}
+
+Responde al último mensaje del cliente de forma clara y breve.
+      `.trim(),
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("Error OpenRouter:", err);
-      return NextResponse.json(
-        { error: "Falla en OpenRouter" },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content || "No pude responder.";
-
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply: text });
   } catch (err) {
-    console.error("ERROR GENERAL:", err);
+    console.error("Error en /api/kiosk-chat:", err);
     return NextResponse.json(
-      { error: "Error interno" },
+      { error: "Error interno en el servidor de chat." },
       { status: 500 }
     );
   }
