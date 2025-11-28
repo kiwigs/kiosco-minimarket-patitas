@@ -1,7 +1,6 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-/* eslint-disable jsx-a11y/alt-text */
 
 import { useEffect, useState, FormEvent } from "react";
 import { type CategoriaBase } from "@/lib/productsStore";

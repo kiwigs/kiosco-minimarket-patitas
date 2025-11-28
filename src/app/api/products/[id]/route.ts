@@ -27,13 +27,12 @@ function rowToProducto(row: ProductRow): Producto {
   };
 }
 
-type RouteContext = {
-  params: { id: string };
-};
-
-// PATCH /api/products/[id]  → actualizar producto
-export async function PATCH(req: Request, ctx: RouteContext) {
-  const { id } = ctx.params;
+// 🔥 PATCH → actualizar producto
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
 
   try {
     const body = await req.json();
@@ -89,7 +88,6 @@ export async function PATCH(req: Request, ctx: RouteContext) {
       );
     }
 
-    // updated_at siempre
     fields.push(`updated_at = NOW()`);
 
     const client = await pool.connect();
@@ -111,8 +109,7 @@ export async function PATCH(req: Request, ctx: RouteContext) {
         );
       }
 
-      const producto = rowToProducto(result.rows[0]);
-      return NextResponse.json(producto, { status: 200 });
+      return NextResponse.json(rowToProducto(result.rows[0]), { status: 200 });
     } finally {
       client.release();
     }
@@ -125,9 +122,12 @@ export async function PATCH(req: Request, ctx: RouteContext) {
   }
 }
 
-// DELETE /api/products/[id]  → eliminar producto
-export async function DELETE(_req: Request, ctx: RouteContext) {
-  const { id } = ctx.params;
+// 🔥 DELETE → eliminar producto
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
 
   try {
     const client = await pool.connect();
