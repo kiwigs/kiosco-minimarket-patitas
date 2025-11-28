@@ -76,6 +76,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
     const {
       nombre,
       sub,
@@ -83,6 +84,8 @@ export async function POST(req: Request) {
       precio,
       activo = true,
       imageUrl,
+      img,
+      image,
     } = body as {
       nombre: string;
       sub: string;
@@ -90,7 +93,11 @@ export async function POST(req: Request) {
       precio: number;
       activo?: boolean;
       imageUrl?: string;
+      img?: string;
+      image?: string;
     };
+
+    const finalImageUrl = imageUrl ?? img ?? image ?? null;
 
     if (
       !nombre ||
@@ -113,7 +120,7 @@ export async function POST(req: Request) {
         `INSERT INTO products (id, nombre, sub, categoria, precio, activo, image_url)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, nombre, sub, categoria, precio, activo, image_url`,
-        [id, nombre, sub, categoria, precio, activo, imageUrl ?? null]
+        [id, nombre, sub, categoria, precio, activo, finalImageUrl]
       );
 
       const producto = rowToProducto(result.rows[0]);

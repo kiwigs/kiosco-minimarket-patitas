@@ -36,7 +36,27 @@ export async function PATCH(req: Request, context: any) {
 
   try {
     const body = await req.json();
-    const { nombre, sub, categoria, precio, activo, imageUrl } = body;
+    const {
+      nombre,
+      sub,
+      categoria,
+      precio,
+      activo,
+      imageUrl,
+      img,
+      image,
+    } = body as {
+      nombre?: string;
+      sub?: string;
+      categoria?: CategoriaBase;
+      precio?: number;
+      activo?: boolean;
+      imageUrl?: string;
+      img?: string;
+      image?: string;
+    };
+
+    const finalImageUrl = imageUrl ?? img ?? image ?? undefined;
 
     const fields: string[] = [];
     const values: (string | number | boolean | null)[] = [];
@@ -62,9 +82,9 @@ export async function PATCH(req: Request, context: any) {
       fields.push(`activo = $${idx++}`);
       values.push(activo);
     }
-    if (imageUrl !== undefined) {
+    if (finalImageUrl !== undefined) {
       fields.push(`image_url = $${idx++}`);
-      values.push(imageUrl);
+      values.push(finalImageUrl);
     }
 
     if (fields.length === 0) {
