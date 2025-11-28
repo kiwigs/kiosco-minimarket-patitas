@@ -1,8 +1,7 @@
 // src/app/api/upload/route.ts
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
@@ -16,30 +15,23 @@ export async function POST(req: Request) {
       );
     }
 
+    // Leemos el archivo en memoria
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    // Tipo MIME de la imagen (image/png, image/jpeg, etc.)
+    const mime = file.type || "application/octet-stream";
 
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
+    // Lo convertimos a base64
+    const base64 = buffer.toString("base64");
 
-    const ext = file.name.split(".").pop() || "bin";
-    const filename =
-      Date.now().toString() +
-      "-" +
-      Math.random().toString(16).slice(2) +
-      "." +
-      ext;
+    // Data URL usable directamente en <img src="...">
+    const dataUrl = `data:${mime};base64,${base64}`;
 
-    const filepath = path.join(uploadsDir, filename);
-    await writeFile(filepath, buffer);
-
-    // Esta URL es la que se guarda en imageUrl y se usa en <img src="...">
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    // El panel espera { url: string }
+    return NextResponse.json({ url: dataUrl });
   } catch (err) {
-    console.error("Error subiendo archivo:", err);
+    console.error("Error en /api/upload:", err);
     return NextResponse.json(
       { error: "Error al subir la imagen" },
       { status: 500 }

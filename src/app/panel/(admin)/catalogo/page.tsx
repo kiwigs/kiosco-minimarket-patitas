@@ -410,7 +410,7 @@ export default function CatalogoAdminPage() {
               Productos registrados
             </h2>
             <button
-              onClick={fetchProducts}
+              onClick={fetchProducts} 
               className="rounded-2xl bg-gray-800 px-3 py-1 text-xs font-semibold text-white shadow hover:brightness-110"
             >
               Actualizar
