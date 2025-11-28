@@ -1,97 +1,72 @@
-// src/app/api/kiosk-chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-
-type IncomingMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const messages = body?.messages as IncomingMessage[] | undefined;
+    const { messages } = await req.json();
 
-    if (!Array.isArray(messages)) {
+    if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
-        { error: "Formato de mensajes inválido" },
+        { error: "Formato inválido" },
         { status: 400 }
       );
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
+      console.error("NO HAY API KEY");
       return NextResponse.json(
-        { error: "OPENAI_API_KEY no está configurada en el servidor" },
+        { error: "OPENROUTER_API_KEY no configurada" },
         { status: 500 }
       );
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost:3000",
+        "X-Title": "Kiosco-Minimarket-Patitas",
       },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        temperature: 0.3,
+        model: "meta-llama/llama-3-8b-instruct",
         messages: [
           {
             role: "system",
-            content: [
-              // contexto
-              "Eres un asistente virtual veterinario de TRIAGE para el 'Kiosco Digital - Minimarket Patitas'.",
-              "Respondes SIEMPRE en español, breve y claro.",
-              "",
-              // límites
-              "Solo puedes dar orientación general sobre salud y bienestar de perros y gatos: vacunas generales, desparasitación en abstracto, signos de alerta, recomendaciones de acudir al veterinario.",
-              "NO das diagnósticos definitivos, NO indicas dosis exactas de medicamentos, NO sustituyes a una veterinaria real.",
-              "",
-              // simples vs complejas
-              "Si la consulta es simple (ej.: qué tipo de alimento es mejor para un cachorro, qué diferencia hay entre alimento seco y húmedo, qué premios convienen, higiene básica), puedes responder con orientación general.",
-              "Si detectas síntomas graves, persistentes, combinados o algo que pueda ser urgente (vómitos repetidos, diarrea con sangre, dificultad para respirar, dolor intenso, convulsiones, apatía extrema, etc.), debes:",
-              "1) Decir claramente que no puedes evaluar el caso a distancia.",
-              "2) Recomendar acudir a una veterinaria PRESENCIAL de inmediato.",
-              "",
-              // derivación / citas
-              "Si el caso parece complejo pero no claramente de urgencia, debes sugerir hablar con una especialista.",
-              "En esos casos, añade SIEMPRE una línea del tipo: 'Si deseas, puedes agendar una cita virtual con nuestra especialista aquí: [ENLACE_CALENDLY]'.",
-              "NO inventes el enlace de Calendly: usa exactamente el texto [ENLACE_CALENDLY] para que luego el dueño del sistema lo reemplace por su URL real.",
-              "",
-              // productos
-              "Puedes, cuando tenga sentido, relacionar la respuesta con tipos de productos del minimarket (alimentos, premios, grooming), pero sin inventar marcas ni precios específicos.",
-              "",
-              // tono
-              "Tono: amable, profesional, cero drama, pero claro cuando algo es serio."
-            ].join(" "),
+            content: `
+Eres un asistente veterinario digital para Minimarket Patitas.
+
+Responde:
+- Claro, amable y en español.
+- Solo orientación básica (alimentación, higiene, primeros signos).
+- NO das dosis ni tratamientos.
+- Si hay síntomas graves: "Esto requiere atención veterinaria inmediata."
+- Si es un caso complejo pero no urgente: "Puedes agendar una cita en: https://calendly.com/tu-vet".
+            `,
           },
-          ...messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          ...messages
         ],
+        temperature: 0.4,
       }),
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      console.error("Error OpenAI:", response.status, text);
+      const err = await response.text();
+      console.error("Error OpenRouter:", err);
       return NextResponse.json(
-        { error: "Error llamando al modelo de IA" },
+        { error: "Falla en OpenRouter" },
         { status: 500 }
       );
     }
 
     const data = await response.json();
-    const reply =
-      data?.choices?.[0]?.message?.content ??
-      "Por ahora no puedo responder, inténtalo de nuevo.";
+    const reply = data?.choices?.[0]?.message?.content || "No pude responder.";
 
     return NextResponse.json({ reply });
   } catch (err) {
-    console.error("Error en /api/kiosk-chat:", err);
+    console.error("ERROR GENERAL:", err);
     return NextResponse.json(
-      { error: "Error interno en el servidor de chat" },
+      { error: "Error interno" },
       { status: 500 }
     );
   }
