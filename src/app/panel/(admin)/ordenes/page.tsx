@@ -349,11 +349,11 @@ export default function PanelOrdenesPage() {
             <thead className="bg-gray-50 text-[11px] uppercase">
               <tr>
                 {/* 1) NÚMERO */}
-                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600 align-top">
                   Número
                 </th>
                 {/* 2) CATEGORÍA */}
-                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600 align-top">
                   Categoría
                 </th>
                 {/* 3) DETALLE */}
@@ -361,19 +361,19 @@ export default function PanelOrdenesPage() {
                   Detalle
                 </th>
                 {/* 4) ESTADO */}
-                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600 align-top">
                   Estado
                 </th>
                 {/* 5) FECHA */}
-                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600 align-top whitespace-nowrap">
                   Fecha y hora
                 </th>
                 {/* 6) TOTAL */}
-                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600 align-top">
                   Total
                 </th>
                 {/* 7) ACCIONES */}
-                <th className="px-4 py-3 text-right font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-gray-600 align-top">
                   Acciones
                 </th>
               </tr>
@@ -439,27 +439,13 @@ export default function PanelOrdenesPage() {
                       <ul className="list-disc pl-6 space-y-1">
                         {detailItems.map((d, idx) => (
                           <li key={idx} className="flex items-center gap-3">
-                            <span className="flex-1 leading-tight">
-                              {d.label}
-                            </span>
-                            <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
+                            <span className="leading-tight">{d.label}</span>
+                            <span className="inline-flex ml-3 items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
                               x{d.qty}
                             </span>
                           </li>
                         ))}
                       </ul>
-                    </td>
-
-                    {/* Estado */}
-                    <td className="px-4 py-3">
-                      <span
-                        className={[
-                          "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
-                          getStatusBadgeClass(o.status),
-                        ].join(" ")}
-                      >
-                        {formatStatusLabel(o.status)}
-                      </span>
                     </td>
 
                     {/* Fecha y hora */}
