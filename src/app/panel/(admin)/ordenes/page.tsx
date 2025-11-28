@@ -465,15 +465,15 @@ export default function PanelOrdenesPage() {
                     </td>
 
                     {/* Fecha y hora */}
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <div>{fecha}</div>
-                      <div className="text-xs text-gray-500">
-                        {hora}
+                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{fecha}</span>
+                        <span className="text-xs text-gray-500">{hora}</span>
                       </div>
                     </td>
 
                     {/* Total */}
-                    <td className="px-4 py-3 text-sm text-gray-800">
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
                       S/ {Number(o.total).toFixed(2)}
                     </td>
 
