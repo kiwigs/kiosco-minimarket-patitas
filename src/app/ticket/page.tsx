@@ -1,11 +1,9 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-/** Catálogo mínimo para poder mostrar nombres y subtítulos en el ticket */
+/** Tipos de producto para el ticket */
 type Producto = {
   id: string;
   nombre: string;
@@ -13,72 +11,14 @@ type Producto = {
   precio: number;
 };
 
-const CATALOGO: Producto[] = [
-  // Alimentos
-  {
-    id: "dogchow-15",
-    nombre: "Dog Chow",
-    sub: "Adultos Grandes 15kg",
-    precio: 137.9,
-  },
-  {
-    id: "ricocan-cordero-15",
-    nombre: "Ricocan",
-    sub: "Adultos Medianos Cordero 15kg",
-    precio: 96.9,
-  },
-  {
-    id: "thor-25",
-    nombre: "Thor",
-    sub: "Adultos Carne + Cereales 25kg",
-    precio: 121.0,
-  },
-  {
-    id: "catchow-8",
-    nombre: "Cat Chow",
-    sub: "Gatos Adultos Esterilizados 8kg",
-    precio: 104.9,
-  },
-  {
-    id: "ricocat-9",
-    nombre: "Ricocat",
-    sub: "Gatos Esterilizados Pescado 9kg",
-    precio: 88.9,
-  },
-  {
-    id: "origens-lata",
-    nombre: "Origens",
-    sub: "Trozos de Cordero Adulto 170g 4u",
-    precio: 32.7,
-  },
-  // Premios
-  {
-    id: "premio-galleta",
-    nombre: "Galletas Caninas",
-    sub: "Sabor Pollo 500g",
-    precio: 19.9,
-  },
-  {
-    id: "premio-snack",
-    nombre: "Snack Masticable",
-    sub: "Cuero prensado 3u",
-    precio: 14.5,
-  },
-  // Grooming
-  {
-    id: "bano-perro",
-    nombre: "Baño Canino",
-    sub: "Shampoo hipoalergénico",
-    precio: 35,
-  },
-  // Recetados
-  {
-    id: "anti-rece",
-    nombre: "Antiparasitario",
-    sub: "Uso con receta",
-    precio: 49.9,
-  },
-];
+type ProductoDB = {
+  id: string;
+  nombre: string;
+  sub: string;
+  precio: number;
+  activo: boolean;
+  imageUrl?: string;
+};
 
 type Order = {
   id: number;
@@ -94,8 +34,11 @@ export default function TicketPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  // 👇 nuevo: saber si el ticket ya pasó por el flujo de impresión
+  // saber si el ticket ya pasó por el flujo de impresión
   const [printed, setPrinted] = useState(false);
+
+  // catálogo real desde Neon
+  const [catalogo, setCatalogo] = useState<Producto[]>([]);
 
   // Cargar orden desde sessionStorage
   useEffect(() => {
@@ -109,9 +52,38 @@ export default function TicketPage() {
       setOrder(null);
     }
 
-    // 👇 importante: borrar para que NO se pueda reusar la misma orden al recargar
+    // importante: borrar para que NO se pueda reusar la misma orden al recargar
     sessionStorage.removeItem("kiosk-last-order");
     sessionStorage.removeItem("kiosk-cart");
+  }, []);
+
+  // Cargar catálogo desde /api/products (Neon)
+  useEffect(() => {
+    const fetchCatalogo = async () => {
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (!res.ok) {
+          console.error("Error cargando catálogo para ticket");
+          return;
+        }
+
+        const data: ProductoDB[] = await res.json();
+        const activos = data.filter((p) => p.activo);
+
+        const mapped: Producto[] = activos.map((p) => ({
+          id: p.id,
+          nombre: p.nombre,
+          sub: p.sub,
+          precio: p.precio,
+        }));
+
+        setCatalogo(mapped);
+      } catch (err) {
+        console.error("Error al traer catálogo en ticket:", err);
+      }
+    };
+
+    fetchCatalogo();
   }, []);
 
   // Escuchar el evento afterprint: se dispara cuando se cierra el diálogo de impresión
@@ -206,7 +178,7 @@ export default function TicketPage() {
           <div className="mt-6 border-t border-dashed pt-4 space-y-3">
             {order.items &&
               Object.entries(order.items).map(([id, qty]) => {
-                const prod = CATALOGO.find((p) => p.id === id);
+                const prod = catalogo.find((p) => p.id === id);
                 const nombre = prod?.nombre ?? id;
                 const sub = prod?.sub ?? "";
                 const precio = prod?.precio ?? 0;
