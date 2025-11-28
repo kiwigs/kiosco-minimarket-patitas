@@ -298,10 +298,6 @@ export default function PanelOrdenesPage() {
             <h1 className="text-xl font-bold text-gray-800">
               Panel de Órdenes
             </h1>
-            <p className="text-xs text-gray-500">
-              Revise y actualice el estado de las órdenes generadas por el
-              kiosco.
-            </p>
           </div>
 
           <button
@@ -361,7 +357,7 @@ export default function PanelOrdenesPage() {
                   Categoría
                 </th>
                 {/* 3) DETALLE */}
-                <th className="px-4 py-3 font-semibold tracking-wide text-gray-600">
+                <th className="px-4 py-3 align-top font-semibold tracking-wide text-gray-600">
                   Detalle
                 </th>
                 {/* 4) ESTADO */}
@@ -439,8 +435,8 @@ export default function PanelOrdenesPage() {
                     </td>
 
                     {/* Detalle */}
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <ul className="list-disc space-y-1 pl-4">
+                    <td className="px-4 py-3 text-sm text-gray-700 align-top">
+                      <ul className="list-disc list-inside space-y-1">
                         {detailItems.map((d, idx) => (
                           <li key={idx} className="flex items-center gap-2">
                             <span className="flex-1">{d.label}</span>
@@ -465,8 +461,8 @@ export default function PanelOrdenesPage() {
                     </td>
 
                     {/* Fecha y hora */}
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="flex flex-col gap-1">
+                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
                         <span className="font-medium">{fecha}</span>
                         <span className="text-xs text-gray-500">{hora}</span>
                       </div>
