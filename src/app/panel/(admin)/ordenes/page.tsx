@@ -465,8 +465,8 @@ export default function PanelOrdenesPage() {
                     </td>
 
                     {/* Fecha y hora */}
-                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      <div className="flex flex-col gap-1">
                         <span className="font-medium">{fecha}</span>
                         <span className="text-xs text-gray-500">{hora}</span>
                       </div>
