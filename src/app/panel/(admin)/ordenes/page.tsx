@@ -294,25 +294,15 @@ export default function PanelOrdenesPage() {
       <div className="w-full bg-[#f2c200] shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-xl font-bold text-white">Panel de Órdenes</h1>
-            <p className="text-xs text-white/90">
-              Revise y actualice el estado de las órdenes generadas por el kiosco.
-            </p>
+            <h1 className="text-xl font-extrabold text-white">Panel de Órdenes</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div>
             <button
               onClick={() => router.push("/panel")}
-              className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-white/20 transition"
+              className="rounded-full bg-white/10 border border-white/30 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-white/20 transition"
             >
               Atrás
-            </button>
-
-            <button
-              onClick={fetchOrders}
-              className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
-            >
-              Actualizar
             </button>
           </div>
         </div>
