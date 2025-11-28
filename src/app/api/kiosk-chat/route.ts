@@ -2,26 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const messages = body?.messages as { role: string; content: string }[] | undefined;
+    const body = await req.json().catch(() => null);
+    const messages = body?.messages as
+      | { role: string; content: string }[]
+      | undefined;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
         {
           error:
-            "El frontend envió un formato de mensajes inválido. Esperaba un array de { role, content }.",
+            "El formato de mensajes es inválido. Vuelve a cargar el kiosco o contacta al administrador.",
         },
         { status: 200 }
       );
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    // 🧪 Leer la API key en TIEMPO DE EJECUCIÓN
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
+    if (!apiKey) {
+      console.error(
+        "[/api/kiosk-chat] Falta OPENROUTER_API_KEY en el entorno del servidor"
+      );
+
       return NextResponse.json(
         {
           error:
@@ -30,6 +37,9 @@ export async function POST(req: NextRequest) {
         { status: 200 }
       );
     }
+
+    // Crear el cliente usando la API key ya verificada
+    const openrouter = createOpenRouter({ apiKey });
 
     const conversationText = messages
       .map((m) => `${m.role === "user" ? "Cliente" : "Asistente"}: ${m.content}`)
