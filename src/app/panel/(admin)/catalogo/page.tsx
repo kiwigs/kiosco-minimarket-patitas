@@ -325,7 +325,7 @@ export default function CatalogoAdminPage() {
               {/* “botón” visual */}
               <label
                 htmlFor="imageUpload"
-                className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm bg-white cursor-pointer hover:bg-gray-50"
+                className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm bg_white cursor-pointer hover:bg-gray-50"
               >
                 <span
                   className={
@@ -405,7 +405,7 @@ export default function CatalogoAdminPage() {
 
         {/* TABLA */}
         <section className="rounded-2xl bg-white p-4 shadow">
-          <div className="mb-3 flex items-center justify_between">
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-800">
               Productos registrados
             </h2>
@@ -483,7 +483,7 @@ export default function CatalogoAdminPage() {
                         {p.sub}
                       </td>
 
-                      <td className="px-3 py-2 text_gray-700">
+                      <td className="px-3 py-2 text-gray-700">
                         {p.categoria}
                       </td>
 
