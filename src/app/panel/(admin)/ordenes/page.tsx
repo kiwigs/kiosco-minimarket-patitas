@@ -489,7 +489,10 @@ export default function PanelOrdenesPage() {
                           Entregado
                         </button>
                         <button
-                          onClick={() => deleteOrder(o.id)}
+                          onClick={() => {
+                            if (!confirm("¿Marcar esta orden como eliminada?")) return;
+                            updateStatus(o.id, "ELIMINADA");
+                          }}
                           className="px-2 text-2xl font-extrabold leading-none text-[#b71c1c] transition hover:text-[#7f0f0f]"
                           aria-label="Eliminar orden"
                         >
