@@ -17,7 +17,17 @@ export type Producto = {
   imageUrl?: string;
 };
 
-function rowToProducto(row: any): Producto {
+type ProductRow = {
+  id: string;
+  nombre: string;
+  sub: string;
+  categoria: CategoriaBase;
+  precio: string | number;
+  activo: boolean;
+  image_url: string | null;
+};
+
+function rowToProducto(row: ProductRow): Producto {
   return {
     id: row.id,
     nombre: row.nombre,
@@ -44,7 +54,7 @@ function generarId(nombre: string, sub: string) {
 export async function GET() {
   const client = await pool.connect();
   try {
-    const result = await client.query(
+    const result = await client.query<ProductRow>(
       `SELECT id, nombre, sub, categoria, precio, activo, image_url
        FROM products
        ORDER BY nombre ASC`
@@ -99,7 +109,7 @@ export async function POST(req: Request) {
 
     const client = await pool.connect();
     try {
-      const result = await client.query(
+      const result = await client.query<ProductRow>(
         `INSERT INTO products (id, nombre, sub, categoria, precio, activo, image_url)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, nombre, sub, categoria, precio, activo, image_url`,

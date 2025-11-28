@@ -5,7 +5,17 @@ import type { CategoriaBase, Producto } from "../route";
 
 export const runtime = "nodejs";
 
-function rowToProducto(row: any): Producto {
+type ProductRow = {
+  id: string;
+  nombre: string;
+  sub: string;
+  categoria: CategoriaBase;
+  precio: string | number;
+  activo: boolean;
+  image_url: string | null;
+};
+
+function rowToProducto(row: ProductRow): Producto {
   return {
     id: row.id,
     nombre: row.nombre,
@@ -44,7 +54,7 @@ export async function PATCH(req: Request, ctx: RouteContext) {
     }>;
 
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean | null)[] = [];
     let idx = 1;
 
     if (nombre !== undefined) {
@@ -92,7 +102,7 @@ export async function PATCH(req: Request, ctx: RouteContext) {
         RETURNING id, nombre, sub, categoria, precio, activo, image_url
       `;
 
-      const result = await client.query(query, values);
+      const result = await client.query<ProductRow>(query, values);
 
       if (result.rowCount === 0) {
         return NextResponse.json(
@@ -122,10 +132,9 @@ export async function DELETE(_req: Request, ctx: RouteContext) {
   try {
     const client = await pool.connect();
     try {
-      const result = await client.query(
-        "DELETE FROM products WHERE id = $1",
-        [id]
-      );
+      const result = await client.query("DELETE FROM products WHERE id = $1", [
+        id,
+      ]);
 
       if (result.rowCount === 0) {
         return NextResponse.json(
