@@ -199,21 +199,37 @@ export default function PanelOrdenesPage() {
   }, []);
 
   const updateStatus = async (id: number, status: string) => {
+    // Optimistic update: mostrar cambio inmediatamente y revertir si falla
+    const prevOrders = orders;
+    setOrders((cur) => cur.map((o) => (o.id === id ? { ...o, status } : o)));
+
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: "PUT",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
 
       if (!res.ok) {
-        console.error("No se pudo actualizar el estado");
+        const text = await res.text().catch(() => "");
+        console.error("No se pudo actualizar el estado:", res.status, text);
+        setOrders(prevOrders); // revertir
+        alert("No se pudo actualizar el estado. Revisa la consola para más detalles.");
         return;
       }
 
+      // Si marcamos como eliminada ocultar inmediatamente en el panel
+      if (String(status).toLowerCase().includes("elimin")) {
+        setHiddenIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      }
+
+      // refrescar desde backend para asegurar consistencia
       await fetchOrders();
     } catch (err) {
       console.error("Error actualizando estado:", err);
+      setOrders(prevOrders); // revertir
+      alert("Error actualizando estado. Revisa la consola para más detalles.");
     }
   };
 
