@@ -202,7 +202,7 @@ export default function MenuPage() {
     if (!lastChangedId) return;
 
     const t = setTimeout(() => {
-      setLastChangedId(null);
+      setLastChangedId(null); // vuelve al estado "normal"
     }, 220);
 
     return () => clearTimeout(t);
@@ -372,74 +372,72 @@ export default function MenuPage() {
 
   /** ---- Lógica del chat ---- */
   const handleSendChat = async () => {
-  const msg = chatInput.trim();
-  if (!msg || chatLoading) return;
+    const msg = chatInput.trim();
+    if (!msg || chatLoading) return;
 
-  const newMessages: ChatMessage[] = [
-    ...chatMessages,
-    { role: "user", content: msg },
-  ];
+    const newMessages: ChatMessage[] = [
+      ...chatMessages,
+      { role: "user", content: msg },
+    ];
 
-  setChatMessages(newMessages);
-  setChatInput("");
-  setChatLoading(true);
+    setChatMessages(newMessages);
+    setChatInput("");
+    setChatLoading(true);
 
-  try {
-    const res = await fetch("/api/kiosk-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: newMessages }),
-    });
-
-    let data: any;
     try {
-      data = await res.json();
-    } catch {
+      const res = await fetch("/api/kiosk-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+
+      let data: { reply?: string; error?: string } | undefined;
+      try {
+        data = (await res.json()) as { reply?: string; error?: string };
+      } catch {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "El servidor de chat devolvió una respuesta inválida. Consulta al administrador del sistema.",
+          },
+        ]);
+        return;
+      }
+
+      if (data?.error && !data?.reply) {
+        setChatMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: String(data.error) },
+        ]);
+        return;
+      }
+
+      const reply: string =
+        data?.reply ??
+        (typeof data?.error === "string"
+          ? data.error
+          : "No pude obtener respuesta del modelo de IA.");
+
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: reply },
+      ]);
+    } catch (err) {
+      console.error("Error llamando a /api/kiosk-chat:", err);
       setChatMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
-            "El servidor de chat devolvió una respuesta inválida. Consulta al administrador del sistema.",
+            "No se pudo contactar con el servidor de chat. Verifica tu conexión o la configuración del backend.",
         },
       ]);
-      return;
+    } finally {
+      setChatLoading(false);
     }
-
-    // Si el backend manda un error explícito
-    if (data?.error && !data?.reply) {
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: String(data.error) },
-      ]);
-      return;
-    }
-
-    const reply: string =
-      data?.reply ??
-      (typeof data?.error === "string"
-        ? data.error
-        : "No pude obtener respuesta del modelo de IA.");
-
-    setChatMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: reply },
-    ]);
-  } catch (err) {
-    console.error("Error llamando a /api/kiosk-chat:", err);
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        content:
-          "No se pudo contactar con el servidor de chat. Verifica tu conexión o la configuración del backend.",
-      },
-    ]);
-  } finally {
-    setChatLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white">
