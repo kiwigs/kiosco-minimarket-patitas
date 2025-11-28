@@ -212,11 +212,11 @@ export default function PanelOrdenesPage() {
       });
 
       const text = await res.text().catch(() => "");
-      let body: any = text;
+      let body: unknown = text;
       try {
         body = text ? JSON.parse(text) : text;
       } catch {
-        /* no-op: keep raw text */
+        // mantener texto crudo si no es JSON
       }
 
       if (!res.ok) {
