@@ -36,7 +36,7 @@ type ProductoDB = {
 
 /* ---- Helpers de presentación ---- */
 
-type DetailItem = { label: string; qty: number };
+type DetailItem = { label: string; qty: number }
 
 // búsqueda tolerante dentro del catálogo
 function findProductTolerant(idRaw: string, catalogo: ProductoMini[]) {
@@ -211,11 +211,20 @@ export default function PanelOrdenesPage() {
         body: JSON.stringify({ status }),
       });
 
+      const text = await res.text().catch(() => "");
+      let body: any = text;
+      try {
+        body = text ? JSON.parse(text) : text;
+      } catch {
+        /* no-op: keep raw text */
+      }
+
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("No se pudo actualizar el estado:", res.status, text);
+        console.error("updateStatus error:", { id, status, statusCode: res.status, body });
         setOrders(prevOrders); // revertir
-        alert("No se pudo actualizar el estado. Revisa la consola para más detalles.");
+        alert(
+          "No se pudo actualizar el estado. Revisa la consola (Network/Console) para ver la respuesta del servidor."
+        );
         return;
       }
 
@@ -227,9 +236,9 @@ export default function PanelOrdenesPage() {
       // refrescar desde backend para asegurar consistencia
       await fetchOrders();
     } catch (err) {
-      console.error("Error actualizando estado:", err);
+      console.error("Network error updating status:", err);
       setOrders(prevOrders); // revertir
-      alert("Error actualizando estado. Revisa la consola para más detalles.");
+      alert("Error de red actualizando estado. Revisa la consola para más detalles.");
     }
   };
 
