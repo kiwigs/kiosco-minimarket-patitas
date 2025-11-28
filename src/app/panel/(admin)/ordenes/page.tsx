@@ -34,7 +34,6 @@ type ProductoDB = {
 
 /* Catálogo ahora viene desde Neon en el componente, ya no se usa CATALOGO_MINI fijo. */
 
-
 /* ---- Helpers de presentación ---- */
 
 type DetailItem = { label: string; qty: number };
@@ -420,10 +419,7 @@ export default function PanelOrdenesPage() {
                 const detailItems = getOrderDetailItems(o.items, catalogo);
 
                 return (
-                  <tr
-                    key={o.id}
-                    className="border-t last:border-b align-top"
-                  >
+                  <tr key={o.id} className="border-t last:border-b align-top">
                     {/* Número */}
                     <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-800">
                       #{o.code}
@@ -448,6 +444,18 @@ export default function PanelOrdenesPage() {
                       </ul>
                     </td>
 
+                    {/* Estado */}
+                    <td className="px-4 py-3 text-sm text-gray-700 align-top">
+                      <span
+                        className={[
+                          "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+                          getStatusBadgeClass(o.status || ""),
+                        ].join(" ")}
+                      >
+                        {formatStatusLabel(o.status || "")}
+                      </span>
+                    </td>
+
                     {/* Fecha y hora */}
                     <td className="px-4 py-3 text-sm text-gray-700 align-top">
                       <div className="flex flex-col gap-1">
@@ -465,17 +473,13 @@ export default function PanelOrdenesPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-2">
                         <button
-                          onClick={() =>
-                            updateStatus(o.id, "PAGADO")
-                          }
+                          onClick={() => updateStatus(o.id, "PAGADO")}
                           className="rounded-2xl bg-green-600 px-4 py-2 text-xs font-semibold text-white shadow hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
                         >
                           Pagado
                         </button>
                         <button
-                          onClick={() =>
-                            updateStatus(o.id, "ENTREGADO")
-                          }
+                          onClick={() => updateStatus(o.id, "ENTREGADO")}
                           className="rounded-2xl bg-gray-700 px-4 py-2 text-xs font-semibold text-white shadow hover:brightness-110 active:translate-y-[1px] active:shadow-inner transition"
                         >
                           Entregado
