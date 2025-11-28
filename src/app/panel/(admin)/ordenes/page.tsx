@@ -436,11 +436,13 @@ export default function PanelOrdenesPage() {
 
                     {/* Detalle */}
                     <td className="px-4 py-3 text-sm text-gray-700 align-top">
-                      <ul className="list-disc list-inside space-y-1">
+                      <ul className="list-disc pl-6 space-y-1">
                         {detailItems.map((d, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="flex-1">{d.label}</span>
-                            <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-gray-100 px-2 text-[11px] font-semibold text-gray-700">
+                          <li key={idx} className="flex items-center gap-3">
+                            <span className="flex-1 leading-tight">
+                              {d.label}
+                            </span>
+                            <span className="inline-flex min-w-[28px] items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
                               x{d.qty}
                             </span>
                           </li>
@@ -461,8 +463,8 @@ export default function PanelOrdenesPage() {
                     </td>
 
                     {/* Fecha y hora */}
-                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-3 text-sm text-gray-700 align-top">
+                      <div className="flex flex-col gap-1">
                         <span className="font-medium">{fecha}</span>
                         <span className="text-xs text-gray-500">{hora}</span>
                       </div>
