@@ -300,7 +300,7 @@ export default function PanelOrdenesPage() {
           <div>
             <button
               onClick={() => router.push("/panel")}
-              className="rounded-full bg-white/10 border border-white/30 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-white/20 transition"
+              className="rounded-full bg-[#7a4f00] px-4 py-2 text-sm font-semibold text-white shadow-md hover:brightness-105 active:translate-y-[1px] transition"
             >
               Atrás
             </button>
