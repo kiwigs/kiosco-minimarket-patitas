@@ -72,3 +72,22 @@ body {
   size: 8cm auto;
   margin: 0;
 }
+
+/* ===== Chatbase: oculto en todas las páginas MENOS /menu ===== */
+
+/* Si el body NO tiene .chatbase-visible, se oculta todo lo que huela a Chatbase */
+body:not(.chatbase-visible) iframe[src*="chatbase.co"],
+body:not(.chatbase-visible) iframe[src*="chatbase"],
+body:not(.chatbase-visible) div[id*="chatbase"],
+body:not(.chatbase-visible) div[class*="chatbase"],
+body:not(.chatbase-visible) button[id*="chatbase"],
+body:not(.chatbase-visible) button[class*="chatbase"],
+body:not(.chatbase-visible) iframe#rM8zqZyJybcwwmpVACnEh,
+body:not(.chatbase-visible) #chatbase-bubble {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+
+

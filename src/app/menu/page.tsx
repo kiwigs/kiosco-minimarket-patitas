@@ -5,6 +5,7 @@
 
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 
 /** ---- Tipos ---- */
 type Categoria = "Grooming" | "Alimentos" | "Premios" | "Recetados";
@@ -126,6 +127,17 @@ function ProductCard({
 /** ---- Página ---- */
 export default function MenuPage() {
   const router = useRouter();
+
+  // 👉 Marca el body para que el widget solo sea visible en /menu
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    document.body.classList.add("chatbase-visible");
+
+    return () => {
+      document.body.classList.remove("chatbase-visible");
+    };
+  }, []);
 
   const [cat, setCat] = useState<Categoria>("Alimentos");
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -755,6 +767,13 @@ export default function MenuPage() {
           </div>
         </div>
       )}
+
+      {/* Chatbase widget: se carga solo en /menu */}
+      <Script id="chatbase-widget" strategy="afterInteractive">
+        {`
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="rM8zqZyJybcwwmpVACnEh";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+        `}
+      </Script>
     </div>
   );
 }
