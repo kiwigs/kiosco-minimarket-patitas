@@ -28,11 +28,6 @@ type ProductoDB = {
   imageUrl?: string;
 };
 
-type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
 /** ---- Botón de categoría ---- */
 function CategoriaBtn({
   active,
@@ -157,12 +152,6 @@ export default function MenuPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [totalBump, setTotalBump] = useState(false);
   const prevTotalRef = useRef(0);
-
-  // --- Chat de IA veterinaria (solo menú) ---
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
 
   /** ---- Carga catálogo desde /api/products ---- */
   useEffect(() => {
@@ -370,75 +359,6 @@ export default function MenuPage() {
     schedulePendingTimer();
   };
 
-  /** ---- Lógica del chat ---- */
-  const handleSendChat = async () => {
-    const msg = chatInput.trim();
-    if (!msg || chatLoading) return;
-
-    const newMessages: ChatMessage[] = [
-      ...chatMessages,
-      { role: "user", content: msg },
-    ];
-
-    setChatMessages(newMessages);
-    setChatInput("");
-    setChatLoading(true);
-
-    try {
-      const res = await fetch("/api/kiosk-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
-      });
-
-      let data: { reply?: string; error?: string } | undefined;
-      try {
-        data = (await res.json()) as { reply?: string; error?: string };
-      } catch {
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              "El servidor de chat devolvió una respuesta inválida. Consulta al administrador del sistema.",
-          },
-        ]);
-        return;
-      }
-
-      if (data?.error && !data?.reply) {
-        setChatMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: String(data.error) },
-        ]);
-        return;
-      }
-
-      const reply: string =
-        data?.reply ??
-        (typeof data?.error === "string"
-          ? data.error
-          : "No pude obtener respuesta del modelo de IA.");
-
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: reply },
-      ]);
-    } catch (err) {
-      console.error("Error llamando a /api/kiosk-chat:", err);
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "No se pudo contactar con el servidor de chat. Verifica tu conexión o la configuración del backend.",
-        },
-      ]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
   return (
     <div className="flex h-[100dvh] flex-col bg-white">
       {/* Franja superior (banner) */}
@@ -527,95 +447,6 @@ export default function MenuPage() {
           )}
         </div>
       </div>
-
-      {/* Botón flotante del chat (justo sobre "Mi Orden") */}
-      <button
-        onClick={() => setChatOpen((v) => !v)}
-        className="fixed bottom-32 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#f2c200] shadow-xl border border-black/10 active:translate-y-[1px] active:shadow-inner"
-      >
-        <span className="text-2xl">🐾</span>
-      </button>
-
-      {/* Ventana de chat */}
-      {chatOpen && (
-        <div className="fixed bottom-52 right-6 z-50 w-[320px] max-h-[70vh] rounded-2xl bg-white shadow-2xl border border-black/10 flex flex-col text-sm">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-black/10 bg-[#f9f9f9] rounded-t-2xl">
-            <div className="flex flex-col">
-              <span className="font-semibold text-[13px]">
-                Asistente veterinario
-              </span>
-              <span className="text-[11px] text-gray-500">
-                Orientación básica. No reemplaza consulta presencial.
-              </span>
-            </div>
-            <button
-              onClick={() => setChatOpen(false)}
-              className="text-xs text-gray-500 hover:text-black"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-            {chatMessages.length === 0 && (
-              <p className="text-[11px] text-gray-500">
-                Ejemplos: “mi perro tiene diarrea”, “¿qué alimento recomiendas
-                para gato esterilizado?”.
-              </p>
-            )}
-
-            {chatMessages.map((m, idx) => (
-              <div
-                key={idx}
-                className={
-                  m.role === "user" ? "flex justify-end" : "flex justify-start"
-                }
-              >
-                <div
-                  className={[
-                    "max-w-[80%] rounded-2xl px-3 py-2 text-[12px] leading-snug",
-                    m.role === "user"
-                      ? "bg-[#f2c200] text-black rounded-br-sm"
-                      : "bg-[#f1f1f1] text-gray-800 rounded-bl-sm",
-                  ].join(" ")}
-                >
-                  {m.content}
-                </div>
-              </div>
-            ))}
-
-            {chatLoading && (
-              <div className="flex justify-start">
-                <div className="bg-[#f1f1f1] text-gray-600 rounded-2xl rounded-bl-sm px-3 py-2 text-[12px]">
-                  Pensando...
-                </div>
-              </div>
-            )}
-          </div>
-
-          <form
-            className="border-t border-black/10 px-2 py-2 flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendChat();
-            }}
-          >
-            <input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Describe el problema de tu mascota..."
-              className="flex-1 rounded-xl border border-black/20 px-2 py-1 text-[12px] outline-none focus:ring-1 focus:ring-[#f2c200]"
-            />
-            <button
-              type="submit"
-              disabled={chatLoading || !chatInput.trim()}
-              className="rounded-xl bg-[#f2c200] px-3 py-1 text-[12px] font-medium disabled:opacity-60"
-            >
-              Enviar
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Barra inferior de Orden */}
       <div className="mt-4 w-full border-t bg-white">
